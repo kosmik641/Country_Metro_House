@@ -16,7 +16,7 @@ int comState = -10;
 int WriteByte(lua_State* state)
 {
 	unsigned int Bytes_To_Send = LUA->GetNumber(2); // Кол-во входящих байт
-	byte* Input_Bytes = new byte[Bytes_To_Send + 2];
+	byte* Input_Bytes = new byte[Bytes_To_Send + 2]();
 	if (LUA->IsType(1, Type::TABLE)) // Проверяем, что первый параметр - таблица
 	{
 		unsigned int Input_Bytes_Index = 0;
@@ -63,7 +63,7 @@ int ReadByte(lua_State* state)
 int StartCOM(lua_State* state)
 {
 	int portNumber = LUA->GetNumber(1);
-	int portBaudRate = 57600;
+	int portBaudRate = LUA->GetNumber(2);
 
 	wchar_t port_numb_str[14];
 
