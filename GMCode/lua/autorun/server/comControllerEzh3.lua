@@ -12,7 +12,7 @@ local ConfigSignals = {
     "KVT",  -- 24
     "KU12", -- 25
     "KU7",  -- 26
-    "~V2",   -- 27
+    "V2",   -- 27
 }
 -- Контроллер машиниста
 local KVPosByte = {
