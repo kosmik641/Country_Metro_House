@@ -1,4 +1,4 @@
--- Кнопки
+-- Кнопки (Тильда в начале означает инвертирование сигнала)
 local ConfigSignals = {
     "SetKV0",   -- 2
     "SetKV1",   -- 3
@@ -16,13 +16,13 @@ local ConfigSignals = {
 }
 -- Контроллер машиниста
 local KVPosByte = {
-    [7] = 3,    --Х3
-    [3] = 2,    --Х2
-    [1] = 1,    --Х1
-    [64] = 0,   -- 0
+    [1] = 3,    --Х3
+    [2] = 2,    --Х2
+    [4] = 1,    --Х1
+    [8] = 0,   -- 0
     [16] = -1,  --Т1
-    [26] = -2,  --Т1а
-    [50] = -3,  --Т2
+    [32] = -2,  --Т1а
+    [64] = -3,  --Т2
 }
 
 local libFounded = UART
@@ -67,26 +67,18 @@ function CH_Con:Connect(port)
 	end
 end
 
-local KVPos,KVPosPin,inSignals,inBytes
+local KVPos,KVPosPin,inBytes
 function CH_Con:Update(train)
-	inSignals = {}
     inBytes = UART.ReadByte(self.inBytesNum)
     if inBytes[0] ~= self.inBytesNum then return end
-	for i=1,self.inBytesNum-1 do
-        for pinNmb=0,7 do
-			inSignals[8*(i-1) + pinNmb] = bit.band(bit.rshift(inBytes[i],pinNmb),0x01) -- inSignals[8*i + pinNmb] = (inBytes[i] >> pinNmb) & 0x01
-        end
-	end
 	KVPos = 0
 	KVPosPin = 0
 	for i=1,#self.inSignalsTrain do
-		self.inSignalsTrain[i][2] = inSignals[i-1]
+		self.inSignalsTrain[i][2] = bit.band(bit.rshift(inBytes[math.floor((i-1)/8)+1],(i-1)%8),0x01) -- self.inSignalsTrain[i][2] = (inBytes[(i-1)/8] >> (i-1)%8) & 0x01
 		local btn,val = train[self.inSignalsTrain[i][1]],self.inSignalsTrain[i][2]
         if self.inSignalsTrain[i][3] then val = 1 - val end
-		if btn then
-			if btn.Value ~= val then
-				btn:TriggerInput("Set",val)
-			end
+		if btn and btn.Value ~= val then
+			btn:TriggerInput("Set",val)
 		else
 			if self.inSignalsTrain[i][1]:find("SetKV") then
 				KVPos = bit.bor(KVPos,bit.lshift(val,KVPosPin))

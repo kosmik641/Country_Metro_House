@@ -3,7 +3,7 @@
 
 uint8_t pinConf[] = {PIN_MAP};
 uint8_t pinCount = sizeof(pinConf)/sizeof(uint8_t);
-uint8_t nmbOutBytes = pinCount/8 + ((pinCount%8)&&1) + 1;
+uint8_t nmbOutBytes = pinCount/8 + ((pinCount%8)&1) + 1;
 uint8_t currPin = 0;
 uint32_t lastTick;
 
