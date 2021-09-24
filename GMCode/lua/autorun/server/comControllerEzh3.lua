@@ -12,7 +12,7 @@ local ConfigSignals = {
     "KVT",  -- 24
     "KU12", -- 25
     "KU7",  -- 26
-    "V2",   -- 27
+    "~V2",   -- 27
 }
 -- Контроллер машиниста
 local KVPosByte = {
@@ -45,6 +45,10 @@ function CH_Con:Initialize()
 	self.inSignalsTrain = {}
     for i=1,#ConfigSignals do
         self.inSignalsTrain[i] = {ConfigSignals[i],0}
+        if ConfigSignals[i][1] == "~" then
+            self.inSignalsTrain[i][1] = self.inSignalsTrain[i][1]:sub(2)
+            self.inSignalsTrain[i][3] = true
+        end
     end
 	self.inBytesNum = math.ceil(#self.inSignalsTrain/8) + 1
 	self.Connected = false
@@ -78,6 +82,7 @@ function CH_Con:Update(train)
 	for i=1,#self.inSignalsTrain do
 		self.inSignalsTrain[i][2] = inSignals[i-1]
 		local btn,val = train[self.inSignalsTrain[i][1]],self.inSignalsTrain[i][2]
+        if self.inSignalsTrain[i][3] then val = 1 - val end
 		if btn then
 			if btn.Value ~= val then
 				btn:TriggerInput("Set",val)
