@@ -1,18 +1,18 @@
 -- Кнопки
 local ConfigSignals = {
-    "SetKV0",
-    "SetKV1",
-    "SetKV2",
-    "SetKV3",
-    "SetKV4",
-    "SetKV5",
-    "SetKV6",
-    "R_Program1",
-    "R_Program2",
-    "KVT",
-    "KU12",
-    "KU7",
-    "V2"
+    "SetKV0",   -- 2
+    "SetKV1",   -- 3
+    "SetKV2",   -- 4
+    "SetKV3",   -- 5
+    "SetKV4",   -- 6
+    "SetKV5",   -- 7
+    "SetKV6",   -- 8
+    "R_Program1",   -- 22
+    "R_Program2",   -- 23
+    "KVT",  -- 24
+    "KU12", -- 25
+    "KU7",  -- 26
+    "V2",   -- 27
 }
 -- Контроллер машиниста
 local KVPosByte = {
@@ -53,7 +53,7 @@ end
 
 function CH_Con:Connect(port)
 	self:Initialize()
-	local COMState = UART.StartCOM(port,74880)
+	local COMState = UART.StartCOM(port,115200)
 	if COMState == 0 then
 		print("UART Lib: Connected!")
 		self.Connected = true
@@ -68,11 +68,10 @@ function CH_Con:Update(train)
 	inSignals = {}
     inBytes = UART.ReadByte(self.inBytesNum)
     if inBytes[0] ~= self.inBytesNum then return end
-    self.LastUpdate = CurTime()
-	for i=0,self.inBytesNum-1 do
-		for pinNmb=0,7 do
-			inSignals[8*i + pinNmb] = bit.band(0x01,bit.rshift(inBytes[i],pinNmb)) -- inSignals[8*i + pinNmb] = (inBytes[i] >> pinNmb) & 0x01
-		end
+	for i=1,self.inBytesNum-1 do
+        for pinNmb=0,7 do
+			inSignals[8*(i-1) + pinNmb] = bit.band(bit.rshift(inBytes[i],pinNmb),0x01) -- inSignals[8*i + pinNmb] = (inBytes[i] >> pinNmb) & 0x01
+        end
 	end
 	KVPos = 0
 	KVPosPin = 0
@@ -90,7 +89,6 @@ function CH_Con:Update(train)
 			end
 		end
 	end
-    -- print(KVPos)
 	KVPos = KVPosByte[KVPos] or train.KV.ControllerPosition
 	if train.KV.ControllerPosition ~= KVPos then
         train.KV:TriggerInput("ControllerSet",KVPos)
@@ -110,5 +108,13 @@ timer.Simple(1,function()
 	end
 end)
 
-concommand.Add("pstart", function(ply,cmd,args) if not args[1] then print("Enter number of COM!") else print("Connecting, please wait...") CH_Con:Connect(args[1]) end end,nil,"Connect to Ezh 3 controller")
+concommand.Add("pstart",function(ply,cmd,args)
+    if not args[1] then
+        print("Enter number of COM!")
+    else
+        if UART.GetCOMState() == 0 then print("Already connected!") return end
+        print("Connecting, please wait...")
+        CH_Con:Connect(args[1])
+    end
+end,nil,"Connect to Ezh 3 controller")
 concommand.Add("pstop", function(ply,cmd,args) print("Ezh3 controller disconnected!") UART.StopCOM() CH_Con.Connected = false end,nil,"Disconnect Ezh 3 controller")
